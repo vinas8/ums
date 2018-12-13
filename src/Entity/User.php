@@ -41,14 +41,15 @@ class User implements UserInterface
      */
     private $password;
 
-//    /**
-//     * @ORM\ManyToMany(targetEntity="App\Entity\Group", mappedBy="users")
-//     */
-//    private $groups;
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\UserGroup", mappedBy="user")
+     */
+    private $userGroups;
+
 
     public function __construct()
     {
-//        $this->groups = new ArrayCollection();
+        $this->userGroups = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -146,37 +147,32 @@ class User implements UserInterface
         $this->apiToken = $apiToken;
     }
 
-//    /**
-//     * @return Collection|Group[]
-//     */
-//    public function getGroups(): Collection
-//    {
-//        return $this->groups;
-//    }
+    /**
+     * @return Collection|UserGroup[]
+     */
+    public function getUserGroups(): Collection
+    {
+        return $this->userGroups;
+    }
 
+    public function addUserGroup(UserGroup $userGroup): self
+    {
+        if (!$this->userGroups->contains($userGroup)) {
+            $this->userGroups[] = $userGroup;
+            $userGroup->addUser($this);
+        }
 
-    //- As an admin I can delete groups when they no longer have members.
+        return $this;
+    }
 
-    //- As an admin I can assign users to a group they aren’t already part of.
-//    public function addToGroup(Group $group): self
-//    {
-//        if (!$this->groups->contains($group)) {
-//            $this->groups[] = $group;
-//            $group->addUser($this);
-//        }
-//
-//        return $this;
-//    }
-//
-//    //- As an admin I can remove users from a group.
-//    public function removeFromGroup(Group $group): self
-//    {
-//        if ($this->groups->contains($group)) {
-//            $this->groups->removeElement($group);
-//            $group->removeUser($this);
-//        }
-//
-//        return $this;
-//    }
+    public function removeUserGroup(UserGroup $userGroup): self
+    {
+        if ($this->userGroups->contains($userGroup)) {
+            $this->userGroups->removeElement($userGroup);
+            $userGroup->removeUser($this);
+        }
+
+        return $this;
+    }
 }
 

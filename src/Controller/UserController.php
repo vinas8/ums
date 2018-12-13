@@ -9,7 +9,9 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\UserGroup;
 use App\Form\UsersType;
+use App\Repository\UserGroupRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use FOS\RestBundle\Controller\Annotations as Rest;
@@ -38,13 +40,19 @@ class UserController extends FOSRestController implements ClassResourceInterface
      * @var UserRepository
      */
     private $userRepository;
+    /**
+     * @var UserGroupRepository
+     */
+    private $userGroupRepository;
 
     public function __construct(
         EntityManagerInterface $entityManager,
-    UserRepository $userRepository
+    UserRepository $userRepository,
+    UserGroupRepository $userGroupRepository
     ) {
         $this->entityManager = $entityManager;
         $this->userRepository = $userRepository;
+        $this->userGroupRepository = $userGroupRepository;
     }
 
     /**
@@ -72,6 +80,26 @@ class UserController extends FOSRestController implements ClassResourceInterface
 //        return $this->handleView($view);
     }
 
+    /**
+     * @Rest\Post("api/user/{user}/addToGroup/{group}", name="api_add_user_to_group")
+     */
+    public function addUserToGroup(Request $request, $user, $group) {
+
+        $user = $this->userRepository->findOneBy(['id' => $user]);
+
+        $group = $this->userGroupRepository->findOneBy(['id' => $group]);
+        if (!$group) {
+            $group = new UserGroup();
+        }
+dd($group);
+        $group->addUser($user);
+
+        $this->entityManager->persist($group);
+
+
+        return new Response('User added to group');
+    }
+
 
     public function redirectAction()
     {
@@ -85,7 +113,7 @@ class UserController extends FOSRestController implements ClassResourceInterface
     /**
      * @Rest\Get("api/account", name="api_account")
      */
-    public function whoIsLoggedIn() {
+    public function userInfo() {
         $user = $this->getUser();
         return $this->json($user);
     }

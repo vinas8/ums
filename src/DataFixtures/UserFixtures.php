@@ -6,6 +6,7 @@ use App\Entity\ApiToken;
 use App\Entity\User;
 use Doctrine\Common\Persistence\ObjectManager;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use App\Entity\UserGroup;
 
 class UserFixtures extends BaseFixture
 {
@@ -17,8 +18,9 @@ class UserFixtures extends BaseFixture
      }
 
     protected function loadData(ObjectManager $manager) {
+        $group = new UserGroup();
 
-        $this->createMany(10, 'main_users', function($i) use ($manager) {
+        $this->createMany(10, 'main_users', function($i) use ($manager, $group) {
             $user = new User();
             $user->setUsername(sprintf('%d@example.com', $i));
             $user->setApiToken(sprintf('miau%d', $i));
@@ -28,6 +30,10 @@ $user->setPassword($this->passwordEncoder->encodePassword($user, 'miau'));
             $apiToken2 = new ApiToken($user);
             $manager->persist($apiToken1);
             $manager->persist($apiToken2);
+
+            $group->addUser($user);
+
+            $manager->persist($group);
 
             return $user;
 
