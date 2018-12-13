@@ -24,7 +24,9 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 
-
+/**
+ * @IsGranted("ROLE_USER")
+ */
 class UserController extends FOSRestController implements ClassResourceInterface
 {
 
@@ -50,24 +52,24 @@ class UserController extends FOSRestController implements ClassResourceInterface
      */
     public function getUsersAction()
     {
-        $data = $this->userRepository->findAll();
-        dd($data);
-//        dd($data);// get data, in this case list of users.
-        $view = $this->view($data, 200)
-            ->setTemplate("MyBundle:Users:getUsers.html.twig")
-            ->setTemplateVar('users')
-        ;
-
-
-        $repository = $this->getDoctrine()->getRepository('AppBundle:Car');
-        $carEntities = $repository->findAll();
-        $dtos = [];
-        foreach ($carEntities as $car) {
-            $dtos[] = CarDtoAssembler::createFromEntity($car);
-        }
-        return $this->view($dtos, Response::HTTP_OK);
-
-        return $this->handleView($view);
+//        $data = $this->userRepository->findAll();
+////        dd($data);// get data, in this case list of users.
+//        $view = $this->view($data, 200)
+//            ->setTemplate("getUsers.html.twig")
+//            ->setTemplateVar('users')
+//        ;
+////        dd($view);
+//
+////
+////        $repository = $this->getDoctrine()->getRepository('AppBundle:Car');
+////        $carEntities = $repository->findAll();
+////        $dtos = [];
+////        foreach ($carEntities as $car) {
+////            $dtos[] = CarDtoAssembler::createFromEntity($car);
+////        }
+////        return $this->view($dtos, Response::HTTP_OK);
+////
+//        return $this->handleView($view);
     }
 
 

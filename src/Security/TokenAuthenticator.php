@@ -9,6 +9,7 @@
 namespace App\Security;
 
 use App\Entity\User;
+use App\Repository\ApiTokenRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -22,10 +23,15 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 class TokenAuthenticator extends AbstractGuardAuthenticator
 {
     private $em;
+    /**
+     * @var ApiTokenRepository
+     */
+    private $apiTokenRepository;
 
-    public function __construct(EntityManagerInterface $em)
+    public function __construct(EntityManagerInterface $em, ApiTokenRepository $apiTokenRepository)
     {
         $this->em = $em;
+        $this->apiTokenRepository = $apiTokenRepository;
     }
 
     /**
@@ -35,7 +41,8 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
      */
     public function supports(Request $request)
     {
-        return $request->headers->has('X-AUTH-TOKEN');
+        return $request->headers->has('Authorization')
+            && 0 === strpos($request->headers->get('Authorization'), 'Bearer ');
     }
 
     /**
@@ -44,25 +51,31 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
      */
     public function getCredentials(Request $request)
     {
-        return array(
-            'token' => $request->headers->get('X-AUTH-TOKEN'),
-        );
+        $authorizationHeader = $request->headers->get('Authorization');
+
+
+        return substr($authorizationHeader, 7);
+//        return array(
+//            'token' => $request->headers->get('Authorization'),
+//        );
     }
 
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
-        $apiToken = $credentials['token'];
+        $apiToken = $this->apiTokenRepository->findOneBy([
+           'token' => $credentials
+        ]);
 
-        if (null === $apiToken) {
+        if (!$apiToken) {
             return;
         }
-        // if a User object, checkCredentials() is called
-        return $this->em->getRepository(User::class)
-            ->findOneBy(['apiToken' => $apiToken]);
+
+        return $apiToken->getUser();
     }
 
     public function checkCredentials($credentials, UserInterface $user)
     {
+        dd('checking');
         // check credentials - e.g. make sure the password is valid
         // no credential check is needed in this case
 
