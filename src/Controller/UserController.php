@@ -27,7 +27,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 
 /**
- * @IsGranted("ROLE_USER")
+ * @IsGranted("ROLE_ADMIN")
  */
 class UserController extends FOSRestController implements ClassResourceInterface
 {
@@ -55,50 +55,6 @@ class UserController extends FOSRestController implements ClassResourceInterface
         $this->userGroupRepository = $userGroupRepository;
     }
 
-    /**
-     * @Rest\Get("api/users", name="api_users")
-     */
-    public function getUsersAction()
-    {
-//        $data = $this->userRepository->findAll();
-////        dd($data);// get data, in this case list of users.
-//        $view = $this->view($data, 200)
-//            ->setTemplate("getUsers.html.twig")
-//            ->setTemplateVar('users')
-//        ;
-////        dd($view);
-//
-////
-////        $repository = $this->getDoctrine()->getRepository('AppBundle:Car');
-////        $carEntities = $repository->findAll();
-////        $dtos = [];
-////        foreach ($carEntities as $car) {
-////            $dtos[] = CarDtoAssembler::createFromEntity($car);
-////        }
-////        return $this->view($dtos, Response::HTTP_OK);
-////
-//        return $this->handleView($view);
-    }
-
-    /**
-     * @Rest\Post("api/user/{user}/addToGroup/{group}", name="api_add_user_to_group")
-     */
-    public function addUserToGroup(Request $request, $user, $group) {
-
-        $user = $this->userRepository->findOneBy(['id' => $user]);
-
-        $group = $this->userGroupRepository->findOneBy(['id' => $group]);
-        if (!$group) {
-            $group = new UserGroup();
-        }
-dd($group);
-        $group->addUser($user);
-
-        $this->entityManager->persist($group);
-
-
-        return new Response('User added to group');
-    }
 
 
     public function redirectAction()

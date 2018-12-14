@@ -23,6 +23,11 @@ class UserGroup
      */
     private $user;
 
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $name;
+
     public function __construct()
     {
         $this->user = new ArrayCollection();
@@ -55,6 +60,18 @@ class UserGroup
         if ($this->user->contains($user)) {
             $this->user->removeElement($user);
         }
+
+        return $this;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(?string $name): self
+    {
+        $this->name = $name;
 
         return $this;
     }

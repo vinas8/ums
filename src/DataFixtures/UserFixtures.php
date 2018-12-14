@@ -31,6 +31,11 @@ $user->setPassword($this->passwordEncoder->encodePassword($user, 'miau'));
             $manager->persist($apiToken1);
             $manager->persist($apiToken2);
 
+            if ($i%2 == 0) {
+                $user->setRoles(["ROLE_USER"]);
+            } else {
+                $user->setRoles(["ROLE_ADMIN"]);
+            }
             $group->addUser($user);
 
             $manager->persist($group);

@@ -34,7 +34,7 @@ final class UserService
      */
     public function getUser(int $userId): User
     {
-        $user = $this->userRepository->findById($userId);
+        $user = $this->userRepository->find($userId);
         if (!$user) {
             throw new EntityNotFoundException('User with id '.$userId.' does not exist!');
         }
