@@ -5,7 +5,9 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
+//TODO: REFACTOR RENAME TO GROUP or sth better
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserGroupRepository")
  */
@@ -15,6 +17,7 @@ class UserGroup
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Groups("main_group")
      */
     private $id;
 
@@ -24,6 +27,7 @@ class UserGroup
     private $user;
 
     /**
+     * @Groups("main_group")
      * @ORM\Column(type="string", length=255, nullable=true)
      */
     private $name;

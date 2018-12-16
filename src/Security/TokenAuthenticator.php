@@ -63,6 +63,7 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
             'token' => $credentials
         ]);
 
+        //TODO: Voters
         if (!$apiToken) {
             throw new CustomUserMessageAuthenticationException('Invalid API Token');
         }

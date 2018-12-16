@@ -51,7 +51,6 @@ class ApiToken
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="apiToken")
-     * @ORM\JoinColumn(nullable=false)
      */
     private $user;
 

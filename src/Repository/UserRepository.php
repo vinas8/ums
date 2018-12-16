@@ -4,6 +4,8 @@ namespace App\Repository;
 
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 
 /**
@@ -14,9 +16,20 @@ use Symfony\Bridge\Doctrine\RegistryInterface;
  */
 class UserRepository extends ServiceEntityRepository
 {
-    public function __construct(RegistryInterface $registry)
+
+    /**
+     * @var EntityManagerInterface
+     */
+    private $entityManager;
+
+    /**
+     * UserRepository constructor.
+     * @param EntityManagerInterface $entityManager
+     */
+    public function __construct(RegistryInterface $registry, EntityManagerInterface $entityManager)
     {
         parent::__construct($registry, User::class);
+        $this->entityManager = $entityManager;
     }
 
     // /**
@@ -35,6 +48,14 @@ class UserRepository extends ServiceEntityRepository
         ;
     }
 
+    /**
+     * @param User $user
+     */
+    public function delete(User $user): void
+    {
+        $this->entityManager->remove($user);
+        $this->entityManager->flush();
+    }
 
     /*
     public function findOneBySomeField($value): ?User

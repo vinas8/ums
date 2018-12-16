@@ -19,6 +19,7 @@ class UserFixtures extends BaseFixture
 
     protected function loadData(ObjectManager $manager) {
         $group = new UserGroup();
+        $group->setName("USERIU_GRUPE");
 
         $this->createMany(10, 'main_users', function($i) use ($manager, $group) {
             $user = new User();

@@ -18,8 +18,8 @@ class HealthcheckController extends FOSRestController
     public function index()
     {
         $data = array(
-            "name" => "cleverti",
-            "extra" => "Is awesome!"
+            "name" => "test",
+            "extra" => "example"
         );
 
         $view = $this->view($data, 200);

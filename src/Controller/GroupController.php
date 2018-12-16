@@ -14,12 +14,17 @@ use App\Service\GroupService;
 use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
 use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\FOSRestController;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Swagger\Annotations as SWG;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class GroupController
+
+//- As an admin I can remove users from a group.
+//- As an admin I can create groups.
+//- As an admin I can delete groups when they no longer have members.
+class GroupController extends FOSRestController
 {
 
     private $groupService;
@@ -75,10 +80,16 @@ class GroupController
 
     //As an admin I can remove users from a group.
     /**
-     *
-     * @Rest\Post("api/group/{group}/removeUser/{user}", name="api_remove_user_from_group")
+     * @Rest\Post("api/group/{group}/removeUser/{user}", name="api_remove_user_from_group") TODO: Ar url struktūra REST?
      */
-    public function removeUser(Request $request, $user, $group) {
+    public function removeUserAction(Request $request, $user, $group) {
+        //todo: validation example Kiec.lt
+        //        if (!$studentInfo) {
+        //            throw new NotFoundHttpException("Mokinys nerastas.");
+        //        }
+        //        if (!$studentInfo->getClassInfo()->getUser()->contains($this->getCurrentUser())) {
+        //            throw new AccessDeniedException("Mokinys nepasiekiamas.");
+        //        }
         if (!$request->isMethod('POST')) {
             return new Response('NOT POST TODO');
         }
@@ -87,6 +98,7 @@ class GroupController
 
         $user = $this->userService->getUser($user);
         $group = $this->groupService->getGroup($group);
+
 
         if (!$group) {
             throw new \InvalidArgumentException("There is no such group");
@@ -112,6 +124,34 @@ class GroupController
 
         $this->entityManager->persist($group);
         $this->entityManager->flush();
+
+        return new Response('Group created');
+    }
+
+    /**
+     * @Rest\Get("api/group", name="api_show_all_groups")
+     */
+    public function getAllGroups() {
+        return $this->json($this->groupService->getAllGroups(), 200, [], [
+                'groups' => ['main_group']]
+        );
+
+//        $this->entityManager->persist($group);
+//        $this->entityManager->flush();
+    }
+
+    /**
+     * @Rest\Get("api/group/getUsers", name="api_get_users_from_group")
+     */
+    public function getUsersFromGroup() {
+        $groups = $this->groupService->getAllGroups();
+
+
+
+        dd($groups);
+
+        //        $this->entityManager->persist($group);
+        //        $this->entityManager->flush();
 
         return new Response('Group created');
     }
