@@ -1,0 +1,15 @@
+#fos_oauth_server:
+#  db_driver: orm
+#  client_class: App\Entity\Client
+#  access_token_class: App\Entity\AccessToken
+#  refresh_token_class: App\Entity\RefreshToken
+#  auth_code_class: App\Entity\AuthCode
+#  service:
+#    user_provider: fos_user.user_provider.username_email
+
+
+#[InvalidArgumentException]
+#  Could not find a matching version of package friendsofsymfony/oauth-server-
+#  bundle-dev. Check the package spelling, your version constraint and that th
+#  e package is available in a stability which matches your minimum-stability
+#  (stable).

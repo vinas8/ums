@@ -8,10 +8,13 @@ use App\Entity\User;
 use App\Entity\UserGroup;
 use App\Form\UsersType;
 use App\Service\UserService;
+use App\Controller\BaseController;
 use Doctrine\ORM\EntityManagerInterface;
 use FOS\RestBundle\Controller\Annotations as Rest;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\View\View;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Swagger\Annotations as SWG;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,11 +22,12 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 
-//- As an admin I can add users. A user has a name.
 //- As an admin I can assign users to a group they aren’t already part of.
-//
-
-class UserController extends FOSRestController
+/**
+ * Class UserController
+ * @Rest\Route("/api")
+ */
+class UserController extends BaseController
 {
     /**
      * @var EntityManagerInterface
@@ -38,17 +42,82 @@ class UserController extends FOSRestController
     public function __construct(
         EntityManagerInterface $entityManager,
         UserService $userService
-
-
     ) {
         $this->entityManager = $entityManager;
         $this->userService = $userService;
     }
 
+    /**
+     * As an admin I can add users. A user has a name.
+     *
+     * @SWG\Parameter(
+     *     name="username",
+     *     in="formData",
+     *     type="string",
+     *     description="User name"
+     * )
+     * @SWG\Response(
+     *     response=200,
+     *     description="User created successfuly",
+     *     @SWG\Schema(
+     *          @SWG\Property(
+     *          property="status",
+     *          type="string",
+     *          default="success"
+     *          ),
+     *          @SWG\Property(
+     *          property="message",
+     *          type="string",
+     *          default="User created successfuly"
+     *           ),
+     *      )
+     * )
+     *
+     * @param  Request $request
+     * @return View
+     */
+    public function postUserAction(Request $request)
+    {
+        $form = $this->createForm(UsersType::class, new User());
 
+        $form->submit(
+            $request->request->all()
+        );
+
+        if (!$form->isValid()) {
+            return $this->view($form);
+        }
+
+        $this->entityManager->persist($form->getData());
+        $this->entityManager->flush();
+
+        return
+            $this->view(
+                [
+                    'message' => 'User created successfuly',
+                ],
+                Response::HTTP_CREATED
+            );
+    }
+
+
+    /**
+     * - As an admin I can delete users.
+     *
+     * Removes the User resource
+     */
+    public function deleteUserAction(int $userId): View
+    {
+        $user = $this->userService->getUser($userId);
+        $this->entityManager->remove($user);
+        $this->entityManager->flush();
+
+        return View::create([], Response::HTTP_NO_CONTENT);
+    }
 
     //TODO: NOT USED
-    public function redirectAction() {
+    public function redirectAction()
+    {
         $view = $this->redirectView($this->generateUrl('some_route'), 301);
         // or
         $view = $this->routeRedirectView('some_route', array(), 301);
@@ -57,12 +126,13 @@ class UserController extends FOSRestController
     }
 
 
-
     /**
      * @Rest\Get("api/account", name="api_account")
      */
-    public function userInfo() {
+    public function userInfo()
+    {
         $user = $this->getUser();
+
         return $this->json($user);
     }
 
@@ -70,7 +140,8 @@ class UserController extends FOSRestController
     /**
      * @Rest\Get("api/user", name="api_get_all_users")
      */
-    public function getAllUsersAction() {
+    public function getAllUsersAction()
+    {
 
         //PROBLEM: json_encode on object. encodes only public properties PHP. NO PUBLIC PROPERTIES
         //        $user = $this->userService->getUser(73);
@@ -85,8 +156,13 @@ class UserController extends FOSRestController
         //        $users = $this->json($this->userService->getAllUsers());
         //        dd($users);
 
-        return $this->json($this->userService->getAllUsers(), 200, [], [
-                'groups' => ['main']]
+        return $this->json(
+            $this->userService->getAllUsers(),
+            200,
+            [],
+            [
+                'groups' => ['main'],
+            ]
         );
 
     }
@@ -121,52 +197,41 @@ class UserController extends FOSRestController
         );
     }
 
-//
-//- As an admin I can assign users to a group they aren’t already part of.
-//- As an admin I can create groups.
-////- As an admin I can delete groups when they no longer have members.
-//    /**
-//     * - As an admin I can delete users.
-//     * @Rest\Delete("api/user/{username}", name="api_delete_users")
-//     */
-//    public function deleteAction($username) {
-//
-//        $this->userService->deleteUser($username);
-//
-//
-//
-//        return new Response('Successfully removed', 204);
-//    }
+    //
+    //- As an admin I can assign users to a group they aren’t already part of.
+    //- As an admin I can create groups.
+    ////- As an admin I can delete groups when they no longer have members.
+    //    /**
+    //     * - As an admin I can delete users.
+    //     * @Rest\Delete("api/user/{username}", name="api_delete_users")
+    //     */
+    //    public function deleteAction($username) {
+    //
+    //        $this->userService->deleteUser($username);
+    //
+    //
+    //
+    //        return new Response('Successfully removed', 204);
+    //    }
 
-    /**
-     * - As an admin I can delete users.
-     *
-     * Removes the User resource
-     * @Rest\Delete("api/users/{userId}")
-     */
-    public function deleteUserAction(int $userId): View
-    {
-        $this->userService->deleteUser($userId);
-        // In case our DELETE was a success we need to return a 204 HTTP NO CONTENT response. The object is deleted.
-        return View::create([], Response::HTTP_NO_CONTENT);
-    }
-//
-//
-//    /**
-//     * Creates an Article resource
-//     * @Rest\Post("/articles")
-//     * @param Request $request
-//     * @return View
-//     */
-//    public function postArticle(Request $request): View
-//    {
-//        $article = new Article();
-//        $article->setTitle($request->get('title'));
-//        $article->setContent($request->get('content'));
-//        $this->articleRepository->save($article);
-//        // In case our POST was a success we need to return a 201 HTTP CREATED response
-//        return View::create($article, Response::HTTP_CREATED);
-//    }
+
+    //
+    //
+    //    /**
+    //     * Creates an Article resource
+    //     * @Rest\Post("/articles")
+    //     * @param Request $request
+    //     * @return View
+    //     */
+    //    public function postArticle(Request $request): View
+    //    {
+    //        $article = new Article();
+    //        $article->setTitle($request->get('title'));
+    //        $article->setContent($request->get('content'));
+    //        $this->articleRepository->save($article);
+    //        // In case our POST was a success we need to return a 201 HTTP CREATED response
+    //        return View::create($article, Response::HTTP_CREATED);
+    //    }
 
 
 }

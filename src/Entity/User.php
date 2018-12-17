@@ -5,11 +5,14 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
+ * @UniqueEntity(fields={"username"}, message="User already exists")
  */
 class User implements UserInterface
 {
@@ -21,12 +24,12 @@ class User implements UserInterface
     private $id;
 
     /**
-     * @ORM\Column(type="string", unique=true)
+     * @ORM\OneToMany(targetEntity="App\Entity\ApiToken", mappedBy="user", orphanRemoval=true)
      */
     private $apiToken;
 
-
     /**
+     * @Assert\NotBlank(message="Please enter a username")
      * @ORM\Column(type="string", length=180, unique=true)
      * @Groups("main")
      */
@@ -39,12 +42,6 @@ class User implements UserInterface
     private $roles = [];
 
     /**
-     * @var string The hashed password
-     * @ORM\Column(type="string")
-     */
-    private $password;
-
-    /**
      * @ORM\ManyToMany(targetEntity="App\Entity\UserGroup", mappedBy="user")
      */
     private $userGroups;
@@ -52,6 +49,7 @@ class User implements UserInterface
 
     public function __construct()
     {
+        $this->apiToken = new ArrayCollection();
         $this->userGroups = new ArrayCollection();
     }
 
@@ -87,7 +85,6 @@ class User implements UserInterface
 
     }
 
-
     /**
      * @see UserInterface
      */
@@ -110,21 +107,6 @@ class User implements UserInterface
     /**
      * @see UserInterface
      */
-    public function getPassword(): string
-    {
-        return (string) $this->password;
-    }
-
-    public function setPassword(string $password): self
-    {
-        $this->password = $password;
-
-        return $this;
-    }
-
-    /**
-     * @see UserInterface
-     */
     public function getSalt()
     {
         // not needed when using the "bcrypt" algorithm in security.yaml
@@ -137,17 +119,6 @@ class User implements UserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
-    }
-
-    public function getApiToken(): ?string {
-        return $this->apiToken;
-    }
-
-    /**
-     * @param mixed $apiToken
-     */
-    public function setApiToken($apiToken): void {
-        $this->apiToken = $apiToken;
     }
 
     /**
@@ -177,5 +148,51 @@ class User implements UserInterface
 
         return $this;
     }
+
+    /**
+     * Returns the password used to authenticate the user.
+     *
+     * This should be the encoded password. On authentication, a plain-text
+     * password will be salted, encoded, and then compared to this value.
+     *
+     * @return string The password
+     */
+    public function getPassword()
+    {
+        return false;
+    }
+
+
+    /**
+     * @return Collection|ApiToken[]
+     */
+    public function getApiToken(): Collection
+    {
+        return $this->apiToken;
+    }
+
+    public function addApiToken(ApiToken $apiToken): self
+    {
+        if (!$this->apiToken->contains($apiToken)) {
+            $this->apiToken[] = $apiToken;
+            $apiToken->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeApiToken(ApiToken $apiToken): self
+    {
+        if ($this->apiToken->contains($apiToken)) {
+            $this->apiToken->removeElement($apiToken);
+            // set the owning side to null (unless already changed)
+            if ($apiToken->getUser() === $this) {
+                $apiToken->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
 }
 

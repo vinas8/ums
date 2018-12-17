@@ -10,42 +10,39 @@ use App\Entity\UserGroup;
 
 class UserFixtures extends BaseFixture
 {
-
-     private $passwordEncoder;
-     public function __construct(UserPasswordEncoderInterface $passwordEncoder)
-     {
-         $this->passwordEncoder = $passwordEncoder;
-     }
-
-    protected function loadData(ObjectManager $manager) {
+    protected function loadData(ObjectManager $manager)
+    {
         $group = new UserGroup();
         $group->setName("USERIU_GRUPE");
 
-        $this->createMany(10, 'main_users', function($i) use ($manager, $group) {
-            $user = new User();
-            $user->setUsername(sprintf('%d@example.com', $i));
-            $user->setApiToken(sprintf('miau%d', $i));
-$user->setPassword($this->passwordEncoder->encodePassword($user, 'miau'));
+        $this->createMany(
+            10,
+            'main_users',
+            function ($i) use ($manager, $group) {
+                $user = new User();
+                $user->setUsername(sprintf('%d@example.com', $i));
 
-            $apiToken1 = new ApiToken($user);
-            $apiToken2 = new ApiToken($user);
-            $manager->persist($apiToken1);
-            $manager->persist($apiToken2);
+                $apiToken1 = new ApiToken($user);
+                $apiToken2 = new ApiToken($user);
 
-            if ($i%2 == 0) {
-                $user->setRoles(["ROLE_USER"]);
-            } else {
-                $user->setRoles(["ROLE_ADMIN"]);
+                $user->addApiToken($apiToken1);
+                $user->addApiToken($apiToken2);
+
+                $manager->persist($apiToken1);
+                $manager->persist($apiToken2);
+
+                if ($i % 2 == 0) {
+                    $user->setRoles(["ROLE_USER"]);
+                } else {
+                    $user->setRoles(["ROLE_ADMIN"]);
+                }
+                $group->addUser($user);
+
+                $manager->persist($group);
+
+                return $user;
             }
-            $group->addUser($user);
-
-            $manager->persist($group);
-
-            return $user;
-
-        });
-
-
+        );
 
         $manager->flush();
     }

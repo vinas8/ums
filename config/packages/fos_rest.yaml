@@ -7,7 +7,7 @@ fos_rest:
   format_listener:
     enabled: true
     rules:
-      - { path: '^/', priorities: ['json', 'xml'], fallback_format: 'html' }
+      - { path: '^/', priorities: ['json', 'xml'], fallback_format: 'json' }
   versioning: true
   view:
     view_response_listener: true
