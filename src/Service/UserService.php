@@ -123,4 +123,9 @@ final class UserService
         }
     }
 
+    public function getUsersFromGroup($groupId)
+    {
+        return $this->userRepository->getUsersByGroupId($groupId);
+    }
+
 }

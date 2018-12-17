@@ -1,4 +1,9 @@
-index:
+group:
+    type: rest
+    resource: App\Controller\GroupController
+    prefix: api
+
+user:
     type: rest
     resource: App\Controller\UserController
     prefix: api

@@ -2,27 +2,19 @@
 
 namespace App\Controller;
 
-namespace App\Controller;
-
+use App\Api\ApiMessage;
 use App\Entity\User;
-use App\Entity\UserGroup;
 use App\Form\UsersType;
 use App\Service\UserService;
-use App\Controller\BaseController;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityNotFoundException;
 use FOS\RestBundle\Controller\Annotations as Rest;
-use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\View\View;
-use Nelmio\ApiDocBundle\Annotation\Model;
 use Swagger\Annotations as SWG;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 
-//- As an admin I can assign users to a group they aren’t already part of.
 /**
  * Class UserController
  * @Rest\Route("/api")
@@ -61,15 +53,15 @@ class UserController extends BaseController
      *     description="User created successfuly",
      *     @SWG\Schema(
      *          @SWG\Property(
-     *          property="status",
-     *          type="string",
-     *          default="success"
+     *              property="status",
+     *              type="string",
+     *              default="success"
      *          ),
      *          @SWG\Property(
-     *          property="message",
-     *          type="string",
-     *          default="User created successfuly"
-     *           ),
+     *              property="message",
+     *              type="string",
+     *              default="User created successfuly"
+     *          ),
      *      )
      * )
      *
@@ -91,39 +83,39 @@ class UserController extends BaseController
         $this->entityManager->persist($form->getData());
         $this->entityManager->flush();
 
-        return
-            $this->view(
-                [
-                    'message' => 'User created successfuly',
-                ],
-                Response::HTTP_CREATED
-            );
+        return ApiMessage::userCreated();
     }
 
 
     /**
      * - As an admin I can delete users.
      *
-     * Removes the User resource
+     *  Removes the User resource
      */
     public function deleteUserAction(int $userId): View
     {
-        $user = $this->userService->getUser($userId);
-        $this->entityManager->remove($user);
-        $this->entityManager->flush();
+        try {
+            $user = $this->userService->getUser($userId);
+        } catch (EntityNotFoundException $e) {
+            ApiMessage::userNotFound();
+        }
 
-        return View::create([], Response::HTTP_NO_CONTENT);
+        if (isset($user)) {
+            $this->entityManager->remove($user);
+            $this->entityManager->flush();
+        }
+
+        return ApiMessage::userDeleted();
     }
 
-    //TODO: NOT USED
-    public function redirectAction()
-    {
-        $view = $this->redirectView($this->generateUrl('some_route'), 301);
-        // or
-        $view = $this->routeRedirectView('some_route', array(), 301);
 
-        return $this->handleView($view);
-    }
+
+
+
+
+
+
+
 
 
     /**
@@ -142,20 +134,6 @@ class UserController extends BaseController
      */
     public function getAllUsersAction()
     {
-
-        //PROBLEM: json_encode on object. encodes only public properties PHP. NO PUBLIC PROPERTIES
-        //        $user = $this->userService->getUser(73);
-        //        $user = $this->serializer->serialize($user, 'json');
-        //        $user = $this->getUser();
-        //TODO: circular reference userRepository->findAll();
-        //MANY TO MANY USER->userGroups?
-        //SOLVED by limiting results with * @Groups("main") in User Entity.
-        //WHAT IF we need to get userGroups?
-        //SOLVED with same approach
-
-        //        $users = $this->json($this->userService->getAllUsers());
-        //        dd($users);
-
         return $this->json(
             $this->userService->getAllUsers(),
             200,
@@ -166,72 +144,4 @@ class UserController extends BaseController
         );
 
     }
-
-
-    //TODO: Pabandyti forma grazinti per api
-    //TODO: 1. Reikia sukurti UsersType formos klasę
-    public function postAction(
-        Request $request
-    ) {
-        $form = $this->createForm(UsersType::class, new User());
-
-        $form->submit($request->request->all());
-
-        if (false === $form->isValid()) {
-
-            return $this->handleView(
-                $this->view($form)
-            );
-        }
-
-        $this->entityManager->persist($form->getData());
-        $this->entityManager->flush();
-
-        return $this->handleView(
-            $this->view(
-                [
-                    'status' => 'ok',
-                ],
-                Response::HTTP_CREATED
-            )
-        );
-    }
-
-    //
-    //- As an admin I can assign users to a group they aren’t already part of.
-    //- As an admin I can create groups.
-    ////- As an admin I can delete groups when they no longer have members.
-    //    /**
-    //     * - As an admin I can delete users.
-    //     * @Rest\Delete("api/user/{username}", name="api_delete_users")
-    //     */
-    //    public function deleteAction($username) {
-    //
-    //        $this->userService->deleteUser($username);
-    //
-    //
-    //
-    //        return new Response('Successfully removed', 204);
-    //    }
-
-
-    //
-    //
-    //    /**
-    //     * Creates an Article resource
-    //     * @Rest\Post("/articles")
-    //     * @param Request $request
-    //     * @return View
-    //     */
-    //    public function postArticle(Request $request): View
-    //    {
-    //        $article = new Article();
-    //        $article->setTitle($request->get('title'));
-    //        $article->setContent($request->get('content'));
-    //        $this->articleRepository->save($article);
-    //        // In case our POST was a success we need to return a 201 HTTP CREATED response
-    //        return View::create($article, Response::HTTP_CREATED);
-    //    }
-
-
 }

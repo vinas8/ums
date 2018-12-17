@@ -2,17 +2,8 @@
 
 namespace App\Controller;
 
-use App\Api\ApiProblem;
-use App\Api\ApiProblemException;
-use App\Repository\ProgrammerRepository;
-use App\Repository\UserRepository;
-use App\Repository\ProjectRepository;
-use App\Repository\BattleRepository;
-use App\Repository\ApiTokenRepository;
 use FOS\RestBundle\Controller\FOSRestController;
 use FOS\RestBundle\View\View;
-use JMS\Serializer\SerializationContext;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;

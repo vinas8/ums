@@ -93,8 +93,11 @@ final class GroupService
         if (!$group) {
             throw new EntityNotFoundException('group with id '.$groupId.' does not exist!');
         }
+    }
 
-//        $this->groupRepository->($group);
+    public function getGroupUsers($groupId)
+    {
+        return $this->groupRepository->getUsersByGroupId($groupId);
     }
 
 }

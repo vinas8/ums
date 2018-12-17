@@ -9,28 +9,25 @@
 namespace App\Controller;
 
 
+use App\Api\ApiMessage;
 use App\Entity\UserGroup;
 use App\Service\GroupService;
 use App\Service\UserService;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityNotFoundException;
 use FOS\RestBundle\Controller\Annotations as Rest;
-use FOS\RestBundle\Controller\FOSRestController;
+use FOS\RestBundle\View\View;
 use Nelmio\ApiDocBundle\Annotation\Model;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Swagger\Annotations as SWG;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-
-//- As an admin I can remove users from a group.
-//- As an admin I can create groups.
-//- As an admin I can delete groups when they no longer have members.
-
 /**
  * Class GroupController
  * @IsGranted("ROLE_ADMIN")
  */
-class GroupController extends FOSRestController
+class GroupController extends BaseController
 {
 
     private $groupService;
@@ -38,6 +35,8 @@ class GroupController extends FOSRestController
      * @var UserService
      */
     private $userService;
+
+    private $entityManager;
 
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -49,9 +48,9 @@ class GroupController extends FOSRestController
         $this->userService = $userService;
     }
 
-
-    //As an admin I can assign users to a group they aren’t already part of.
     /**
+     *
+     * As an admin I can assign users to a group they aren’t already part of.
      * @SWG\Response(
      *     response=200,
      *     description="Returns the rewards of an user",
@@ -60,19 +59,30 @@ class GroupController extends FOSRestController
      *         @SWG\Items(ref=@Model(type=UserGroup::class, groups={"full"}))
      *     )
      * )
-     * @Rest\Post("api/group/{group}/addUser/{user}", name="api_add_user_to_group")
+     * @Rest\Post("api/groups/user", name="api_add_user_to_group")
      */
-    public function addUser(Request $request, $user, $group) {
-        if (!$request->isMethod('POST')) {
-            return new Response('NOT POST TODO');
+    public function addUserAction(Request $request)
+    {
+        $userId = $request->get('userId');
+        $groupId = $request->get('groupId');
+
+        if (!$userId) {
+            return ApiMessage::userNotFound();
+        }
+        if (!$groupId) {
+            return ApiMessage::groupNotFound();
         }
 
-        $user = $this->userService->getUser($user);
+        try {
+            $user = $this->userService->getUser($userId);
+        } catch (EntityNotFoundException $e) {
+            return ApiMessage::userNotFound();
+        }
 
-        $group = $this->groupService->getGroup($group);
-
-        if (!$group) {
-            throw new \InvalidArgumentException("There is no such group");
+        try {
+            $group = $this->groupService->getGroup($groupId);
+        } catch (EntityNotFoundException $e) {
+            return ApiMessage::groupNotFound();
         }
 
         $group->addUser($user);
@@ -80,34 +90,43 @@ class GroupController extends FOSRestController
         $this->entityManager->persist($group);
         $this->entityManager->flush();
 
-        return $group;
+        return
+            $this->view(
+                [
+                    'message' => 'User added to group',
+                ],
+                Response::HTTP_OK
+            );
     }
 
 
-    //As an admin I can remove users from a group.
     /**
-     * @Rest\Post("api/group/{group}/removeUser/{user}", name="api_remove_user_from_group") TODO: Ar url struktūra REST?
+     * As an admin I can delete users from a group.
+     * @Rest\Delete("api/groups/user", name="api_remove_user_from_group")
      */
-    public function removeUserAction(Request $request, $user, $group) {
-        //todo: validation example Kiec.lt
-        //        if (!$studentInfo) {
-        //            throw new NotFoundHttpException("Mokinys nerastas.");
-        //        }
-        //        if (!$studentInfo->getClassInfo()->getUser()->contains($this->getCurrentUser())) {
-        //            throw new AccessDeniedException("Mokinys nepasiekiamas.");
-        //        }
-        if (!$request->isMethod('POST')) {
-            return new Response('NOT POST TODO');
+    public function deleteUserAction(Request $request)
+    {
+
+        $userId = $request->get('userId');
+        $groupId = $request->get('groupId');
+
+        if (!$userId) {
+            return ApiMessage::userNotFound();
         }
-//        $this->handlerequest?
-//        $this->validate?
+        if (!$groupId) {
+            return ApiMessage::groupNotFound();
+        }
 
-        $user = $this->userService->getUser($user);
-        $group = $this->groupService->getGroup($group);
+        try {
+            $user = $this->userService->getUser($userId);
+        } catch (EntityNotFoundException $exception) {
+            return ApiMessage::userNotFound();
+        }
 
-
-        if (!$group) {
-            throw new \InvalidArgumentException("There is no such group");
+        try {
+            $group = $this->groupService->getGroup($groupId);
+        } catch (EntityNotFoundException $e) {
+            ApiMessage::groupNotFound();
         }
 
         $group->removeUser($user);
@@ -115,50 +134,64 @@ class GroupController extends FOSRestController
         $this->entityManager->persist($group);
         $this->entityManager->flush();
 
-        return new Response('User removed from group');
+        return ApiMessage::userDeleted();
     }
 
+
     /**
-     * @Rest\Post("api/group", name="api_create_group")
+     * - As an admin I can delete groups.
+     *
+     *  Removes the Group resource
      */
-    public function createGroup($name = 'unnamed') {
+    public function deleteGroupAction(int $groupId): View
+    {
+        try {
+            $group = $this->groupService->getGroup($groupId);
+        } catch (EntityNotFoundException $e) {
+            return ApiMessage::groupNotFound();
+        }
+
+        $users = $this->userService->getUsersFromGroup($groupId);
+
+        if (isset($users) && isset($group) && empty($users)) {
+            $this->entityManager->remove($group);
+            $this->entityManager->flush();
+
+            return ApiMessage::groupDeleted();
+        }
+
+        return ApiMessage::groupHasUsers();
+    }
+
+
+
+
+    public function postGroupAction(Request $request)
+    {
         $group = new UserGroup();
 
-        dd($name);
-
-        $group->setName($name);
+        if ($groupName = $request->get('groupName')) {
+            $group->setName($groupName);
+        }
 
         $this->entityManager->persist($group);
         $this->entityManager->flush();
 
-        return new Response('Group created');
+        return ApiMessage::groupCreated();
     }
 
     /**
-     * @Rest\Get("api/group", name="api_show_all_groups")
+     * @Rest\Get("api/groups", name="api_show_all_groups")
      */
-    public function getAllGroups() {
-        return $this->json($this->groupService->getAllGroups(), 200, [], [
-                'groups' => ['main_group']]
+    public function getAllGroups()
+    {
+        return $this->json(
+            $this->groupService->getAllGroups(),
+            200,
+            [],
+            [
+                'groups' => ['main_group'],
+            ]
         );
-
-//        $this->entityManager->persist($group);
-//        $this->entityManager->flush();
-    }
-
-    /**
-     * @Rest\Get("api/group/getUsers", name="api_get_users_from_group")
-     */
-    public function getUsersFromGroup() {
-        $groups = $this->groupService->getAllGroups();
-
-
-
-        dd($groups);
-
-        //        $this->entityManager->persist($group);
-        //        $this->entityManager->flush();
-
-        return new Response('Group created');
     }
 }
