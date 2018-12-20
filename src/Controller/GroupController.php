@@ -51,15 +51,8 @@ class GroupController extends BaseController
     /**
      *
      * As an admin I can assign users to a group they aren’t already part of.
-     * @SWG\Response(
-     *     response=200,
-     *     description="Returns the rewards of an user",
-     *     @SWG\Schema(
-     *         type="array",
-     *         @SWG\Items(ref=@Model(type=UserGroup::class, groups={"full"}))
-     *     )
-     * )
-     * @Rest\Post("api/groups/user", name="api_add_user_to_group")
+
+     * @Rest\Post("groups/user", name="api_add_user_to_group")
      */
     public function addUserAction(Request $request)
     {
@@ -102,7 +95,7 @@ class GroupController extends BaseController
 
     /**
      * As an admin I can delete users from a group.
-     * @Rest\Delete("api/groups/user", name="api_remove_user_from_group")
+     * @Rest\Delete("groups/user", name="api_remove_user_from_group")
      */
     public function deleteUserAction(Request $request)
     {
@@ -181,7 +174,7 @@ class GroupController extends BaseController
     }
 
     /**
-     * @Rest\Get("api/groups", name="api_show_all_groups")
+     * @Rest\Get("groups", name="api_show_all_groups")
      */
     public function getAllGroups()
     {

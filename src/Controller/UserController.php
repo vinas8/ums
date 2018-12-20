@@ -17,7 +17,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class UserController
- * @Rest\Route("/api")
  */
 class UserController extends BaseController
 {
@@ -119,7 +118,7 @@ class UserController extends BaseController
 
 
     /**
-     * @Rest\Get("api/account", name="api_account")
+     * @Rest\Get("account", name="api_account")
      */
     public function userInfo()
     {
@@ -130,7 +129,7 @@ class UserController extends BaseController
 
 
     /**
-     * @Rest\Get("api/user", name="api_get_all_users")
+     * @Rest\Get("user", name="api_get_all_users")
      */
     public function getAllUsersAction()
     {
